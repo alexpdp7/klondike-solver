@@ -2,11 +2,22 @@ use rand::seq::SliceRandom;
 use std::{collections::HashMap, fmt::Write};
 
 fn main() {
-    let state = KlondikeState::new(shuffled_deck());
-    println!("{}", state.as_text());
-    println!("Possible moves:");
-    for possible_move in state.possible_moves() {
-        println!("{}", possible_move.as_text());
+    let mut state = KlondikeState::new(shuffled_deck());
+    loop {
+        println!("{}", state.as_text());
+        let possible_moves = state.possible_moves();
+        if possible_moves.is_empty() {
+            std::process::exit(1);
+        }
+        for (i, possible_move) in possible_moves.iter().enumerate() {
+            println!("{} {:?}", i, possible_move.movements.last().unwrap());
+        }
+        let mut buffer = String::new();
+        std::io::stdin().read_line(&mut buffer).unwrap();
+        state = possible_moves
+            .get(buffer.trim().parse::<usize>().unwrap())
+            .unwrap()
+            .clone();
     }
 }
 
@@ -171,7 +182,7 @@ impl Column {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct KlondikeState {
     pub collected_clubs: Option<Value>,
     pub collected_spades: Option<Value>,
