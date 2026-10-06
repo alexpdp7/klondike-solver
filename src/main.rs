@@ -23,10 +23,10 @@ fn main() {
 
 #[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
 pub enum Suit {
-    CLUBS,
-    SPADES,
-    DIAMONDS,
-    HEARTS,
+    Clubs,
+    Spades,
+    Diamonds,
+    Hearts,
 }
 
 impl std::fmt::Display for Suit {
@@ -35,37 +35,37 @@ impl std::fmt::Display for Suit {
             f,
             "{}",
             match self {
-                Self::CLUBS => "♣",
-                Suit::SPADES => "♠",
-                Suit::DIAMONDS => "♦",
-                Suit::HEARTS => "♥",
+                Self::Clubs => "♣",
+                Suit::Spades => "♠",
+                Suit::Diamonds => "♦",
+                Suit::Hearts => "♥",
             }
         )
     }
 }
 
-pub const SUITS: [Suit; 4] = [Suit::CLUBS, Suit::SPADES, Suit::DIAMONDS, Suit::HEARTS];
+pub const SUITS: [Suit; 4] = [Suit::Clubs, Suit::Spades, Suit::Diamonds, Suit::Hearts];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Value {
-    ACE,
-    TWO,
-    THREE,
-    FOUR,
-    FIVE,
-    SIX,
-    SEVEN,
-    EIGHT,
-    NINE,
-    TEN,
-    JACK,
-    QUEEN,
-    KING,
+    Ace,
+    Two,
+    Three,
+    Four,
+    Five,
+    Six,
+    Seven,
+    Eight,
+    Nine,
+    Ten,
+    Jack,
+    Queen,
+    King,
 }
 impl Value {
     fn next(&self) -> Option<Value> {
         match self {
-            Value::KING => None,
+            Value::King => None,
             value => Some(VALUES[VALUES.iter().position(|v| v == value).unwrap() + 1]),
         }
     }
@@ -77,38 +77,38 @@ impl std::fmt::Display for Value {
             f,
             "{}",
             match self {
-                Value::ACE => " A",
-                Value::TWO => " 2",
-                Value::THREE => " 3",
-                Value::FOUR => " 4",
-                Value::FIVE => " 5",
-                Value::SIX => " 6",
-                Value::SEVEN => " 7",
-                Value::EIGHT => " 8",
-                Value::NINE => " 9",
-                Value::TEN => "10",
-                Value::JACK => " J",
-                Value::QUEEN => " Q",
-                Value::KING => " K",
+                Value::Ace => " A",
+                Value::Two => " 2",
+                Value::Three => " 3",
+                Value::Four => " 4",
+                Value::Five => " 5",
+                Value::Six => " 6",
+                Value::Seven => " 7",
+                Value::Eight => " 8",
+                Value::Nine => " 9",
+                Value::Ten => "10",
+                Value::Jack => " J",
+                Value::Queen => " Q",
+                Value::King => " K",
             }
         )
     }
 }
 
 pub const VALUES: [Value; 13] = [
-    Value::ACE,
-    Value::TWO,
-    Value::THREE,
-    Value::FOUR,
-    Value::FIVE,
-    Value::SIX,
-    Value::SEVEN,
-    Value::EIGHT,
-    Value::NINE,
-    Value::TEN,
-    Value::JACK,
-    Value::QUEEN,
-    Value::KING,
+    Value::Ace,
+    Value::Two,
+    Value::Three,
+    Value::Four,
+    Value::Five,
+    Value::Six,
+    Value::Seven,
+    Value::Eight,
+    Value::Nine,
+    Value::Ten,
+    Value::Jack,
+    Value::Queen,
+    Value::King,
 ];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -317,16 +317,16 @@ impl KlondikeState {
 
     fn collected_by_suit(&self, suit: Suit) -> Option<Value> {
         match suit {
-            Suit::CLUBS => self.collected_clubs,
-            Suit::SPADES => self.collected_spades,
-            Suit::DIAMONDS => self.collected_diamonds,
-            Suit::HEARTS => self.collected_hearts,
+            Suit::Clubs => self.collected_clubs,
+            Suit::Spades => self.collected_spades,
+            Suit::Diamonds => self.collected_diamonds,
+            Suit::Hearts => self.collected_hearts,
         }
     }
 
     fn next_to_collect_by_suit(&self, suit: Suit) -> Option<Value> {
         match self.collected_by_suit(suit) {
-            None => Some(Value::ACE),
+            None => Some(Value::Ace),
             Some(value) => value.next(),
         }
     }
@@ -341,10 +341,10 @@ impl KlondikeState {
         let mut movements = self.movements.clone().into_iter().collect::<Vec<_>>();
         movements.push(Movement::CollectFromColumn(column_index));
         KlondikeState {
-            collected_clubs: *collected_by_suit.get(&Suit::CLUBS).unwrap(),
-            collected_spades: *collected_by_suit.get(&Suit::SPADES).unwrap(),
-            collected_diamonds: *collected_by_suit.get(&Suit::DIAMONDS).unwrap(),
-            collected_hearts: *collected_by_suit.get(&Suit::HEARTS).unwrap(),
+            collected_clubs: *collected_by_suit.get(&Suit::Clubs).unwrap(),
+            collected_spades: *collected_by_suit.get(&Suit::Spades).unwrap(),
+            collected_diamonds: *collected_by_suit.get(&Suit::Diamonds).unwrap(),
+            collected_hearts: *collected_by_suit.get(&Suit::Hearts).unwrap(),
             columns,
             draw_pile: self.draw_pile.clone(),
             draw_pile_position: self.draw_pile_position,
@@ -354,10 +354,10 @@ impl KlondikeState {
 
     fn collected_by_suit_hashmap(&self) -> HashMap<Suit, Option<Value>> {
         HashMap::from([
-            (Suit::CLUBS, self.collected_clubs),
-            (Suit::SPADES, self.collected_spades),
-            (Suit::DIAMONDS, self.collected_diamonds),
-            (Suit::HEARTS, self.collected_hearts),
+            (Suit::Clubs, self.collected_clubs),
+            (Suit::Spades, self.collected_spades),
+            (Suit::Diamonds, self.collected_diamonds),
+            (Suit::Hearts, self.collected_hearts),
         ])
     }
 }
