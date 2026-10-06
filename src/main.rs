@@ -345,8 +345,6 @@ impl KlondikeState {
         let column_index = self.columns.iter().position(|c| c == column).unwrap();
         let mut columns = self.columns.clone();
         columns[column_index] = popped_column;
-        let mut movements = self.movements.clone().into_iter().collect::<Vec<_>>();
-        movements.push(Movement::CollectFromColumn(column_index));
         KlondikeState {
             collected_clubs: *collected_by_suit.get(&Suit::Clubs).unwrap(),
             collected_spades: *collected_by_suit.get(&Suit::Spades).unwrap(),
@@ -355,7 +353,10 @@ impl KlondikeState {
             columns,
             draw_pile: self.draw_pile.clone(),
             draw_pile_position: self.draw_pile_position,
-            movements,
+            movements: new_movements(
+                self.movements.clone(),
+                Movement::CollectFromColumn(column_index),
+            ),
         }
     }
 
@@ -367,4 +368,9 @@ impl KlondikeState {
             (Suit::Hearts, self.collected_hearts),
         ])
     }
+
+fn new_movements(old_movements: Vec<Movement>, movement: Movement) -> Vec<Movement> {
+    let mut movements = old_movements.into_iter().collect::<Vec<_>>();
+    movements.push(movement);
+    movements
 }
