@@ -272,7 +272,9 @@ impl KlondikeState {
     pub fn possible_moves(&self) -> Vec<KlondikeState> {
         let mut result = vec![];
         result.extend(self.possible_collect_from_columns());
-        // TODO
+        // possible_move_between_columns
+        // possible_collect_from_draw_pile
+        // possible_move_from_draw_pile_to_column
         result
     }
 
