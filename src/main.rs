@@ -1,11 +1,16 @@
 use rand::seq::SliceRandom;
-use std::fmt::Write;
+use std::{collections::HashMap, fmt::Write};
 
 fn main() {
-    println!("{}", KlondikeState::new(shuffled_deck()).as_text());
+    let state = KlondikeState::new(shuffled_deck());
+    println!("{}", state.as_text());
+    println!("Possible moves:");
+    for possible_move in state.possible_moves() {
+        println!("{}", possible_move.as_text());
+    }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
 pub enum Suit {
     CLUBS,
     SPADES,
@@ -30,7 +35,7 @@ impl std::fmt::Display for Suit {
 
 pub const SUITS: [Suit; 4] = [Suit::CLUBS, Suit::SPADES, Suit::DIAMONDS, Suit::HEARTS];
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Value {
     ACE,
     TWO,
@@ -45,6 +50,14 @@ pub enum Value {
     JACK,
     QUEEN,
     KING,
+}
+impl Value {
+    fn next(&self) -> Option<Value> {
+        match self {
+            Value::KING => None,
+            value => Some(VALUES[VALUES.iter().position(|v| v == value).unwrap() + 1]),
+        }
+    }
 }
 
 impl std::fmt::Display for Value {
@@ -87,7 +100,7 @@ pub const VALUES: [Value; 13] = [
     Value::KING,
 ];
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Card {
     suit: Suit,
     value: Value,
@@ -116,10 +129,41 @@ pub fn shuffled_deck() -> [Card; 52] {
     deck
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Column {
     pub covered: Vec<Card>,
     pub uncovered: Vec<Card>,
+}
+
+fn split_last<T: Copy>(v: &[T]) -> (&[T], T) {
+    let (except_last, last) = v.split_at(v.len() - 1);
+    (except_last, *last.first().unwrap())
+}
+
+impl Column {
+    fn pop_last_uncovered(&self) -> (Column, Card) {
+        let (except_last, popped_card) = split_last(&self.uncovered);
+        let popped_column = match except_last.len() {
+            0 => match self.covered.len() {
+                0 => Column {
+                    covered: vec![],
+                    uncovered: vec![],
+                },
+                _ => {
+                    let (covered, uncovered) = split_last(&self.covered);
+                    Column {
+                        covered: covered.to_vec(),
+                        uncovered: vec![uncovered],
+                    }
+                }
+            },
+            _ => Column {
+                covered: self.covered.clone(),
+                uncovered: except_last.to_vec(),
+            },
+        };
+        (popped_column, popped_card)
+    }
 }
 
 #[derive(Debug)]
@@ -223,5 +267,78 @@ impl KlondikeState {
         }
 
         result
+    }
+
+    pub fn possible_moves(&self) -> Vec<KlondikeState> {
+        let mut result = vec![];
+        result.extend(self.possible_collect_from_columns());
+        // TODO
+        result
+    }
+
+    fn possible_collect_from_columns(&self) -> Vec<KlondikeState> {
+        let mut result = vec![];
+
+        for column in &self.columns {
+            match column.uncovered.last() {
+                None => {}
+                Some(last) => match self.next_to_collect_by_suit(last.suit) {
+                    None => {}
+                    Some(next_to_collect) if next_to_collect == last.value => {
+                        result.push(self.collect_from_column(column));
+                    }
+                    Some(_) => {}
+                },
+            }
+        }
+
+        result
+    }
+
+    fn collected_by_suit(&self, suit: Suit) -> Option<Value> {
+        match suit {
+            Suit::CLUBS => self.collected_clubs,
+            Suit::SPADES => self.collected_spades,
+            Suit::DIAMONDS => self.collected_diamonds,
+            Suit::HEARTS => self.collected_hearts,
+        }
+    }
+
+    fn next_to_collect_by_suit(&self, suit: Suit) -> Option<Value> {
+        match self.collected_by_suit(suit) {
+            None => Some(Value::ACE),
+            Some(value) => value.next(),
+        }
+    }
+
+    fn collect_from_column(&self, column: &Column) -> KlondikeState {
+        let (popped_column, card) = column.pop_last_uncovered();
+        let mut collected_by_suit = self.collected_by_suit_hashmap();
+        collected_by_suit.insert(card.suit, Some(card.value));
+        let columns = self.columns.clone().map(|c| {
+            if c == *column {
+                popped_column.clone()
+            } else {
+                c
+            }
+        });
+        KlondikeState {
+            collected_clubs: *collected_by_suit.get(&Suit::CLUBS).unwrap(),
+            collected_spades: *collected_by_suit.get(&Suit::SPADES).unwrap(),
+            collected_diamonds: *collected_by_suit.get(&Suit::DIAMONDS).unwrap(),
+            collected_hearts: *collected_by_suit.get(&Suit::HEARTS).unwrap(),
+            columns,
+            draw_pile: self.draw_pile.clone(),
+            draw_pile_position: self.draw_pile_position,
+        }
+    }
+
+    fn collected_by_suit_hashmap(&self) -> HashMap<Suit, Option<Value>> {
+        HashMap::from([
+            (Suit::CLUBS, self.collected_clubs),
+            (Suit::SPADES, self.collected_spades),
+            (Suit::DIAMONDS, self.collected_diamonds),
+            (Suit::HEARTS, self.collected_hearts),
+        ])
     }
 }
