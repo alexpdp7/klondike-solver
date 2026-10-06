@@ -230,12 +230,19 @@ impl KlondikeState {
             .collect::<Vec<_>>()
             .join(" ");
         writeln!(&mut result, "draw pile: {}", draw_pile).unwrap();
-        writeln!(
-            &mut result,
-            "           {}^^^^",
-            "    ".repeat(self.draw_pile_position)
-        )
-        .unwrap();
+        write!(&mut result, "           ").unwrap();
+        for i in 0..self.draw_pile.len() {
+            write!(
+                &mut result,
+                "{}",
+                match i == self.draw_pile_position {
+                    true => format!("^{:^>2} ", i),
+                    false => format!(" {:>2} ", i),
+                }
+            )
+            .unwrap()
+        }
+        writeln!(&mut result).unwrap();
 
         fn collected(collected: Option<Value>) -> String {
             match collected {
