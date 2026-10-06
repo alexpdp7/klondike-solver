@@ -112,6 +112,11 @@ impl std::fmt::Display for Card {
     }
 }
 
+#[derive(Debug, Clone)]
+pub enum Movement {
+    CollectFromColumn(usize),
+}
+
 pub fn deck() -> [Card; 52] {
     let mut result = vec![];
     for suit in SUITS {
@@ -176,6 +181,7 @@ pub struct KlondikeState {
     pub columns: [Column; 7],
     pub draw_pile: Vec<Card>,
     pub draw_pile_position: usize,
+    pub movements: Vec<Movement>,
 }
 
 impl KlondikeState {
@@ -200,6 +206,7 @@ impl KlondikeState {
             columns,
             draw_pile,
             draw_pile_position: 2,
+            movements: vec![],
         }
     }
 
@@ -317,13 +324,11 @@ impl KlondikeState {
         let (popped_column, card) = column.pop_last_uncovered();
         let mut collected_by_suit = self.collected_by_suit_hashmap();
         collected_by_suit.insert(card.suit, Some(card.value));
-        let columns = self.columns.clone().map(|c| {
-            if c == *column {
-                popped_column.clone()
-            } else {
-                c
-            }
-        });
+        let column_index = self.columns.iter().position(|c| c == column).unwrap();
+        let mut columns = self.columns.clone();
+        columns[column_index] = popped_column;
+        let mut movements = self.movements.clone().into_iter().collect::<Vec<_>>();
+        movements.push(Movement::CollectFromColumn(column_index));
         KlondikeState {
             collected_clubs: *collected_by_suit.get(&Suit::CLUBS).unwrap(),
             collected_spades: *collected_by_suit.get(&Suit::SPADES).unwrap(),
@@ -332,6 +337,7 @@ impl KlondikeState {
             columns,
             draw_pile: self.draw_pile.clone(),
             draw_pile_position: self.draw_pile_position,
+            movements,
         }
     }
 
