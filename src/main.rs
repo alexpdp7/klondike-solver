@@ -126,6 +126,7 @@ impl std::fmt::Display for Card {
 #[derive(Debug, Clone)]
 pub enum Movement {
     CollectFromColumn(usize),
+    CollectFromDrawPile(Card),
 }
 
 pub fn deck() -> [Card; 52] {
@@ -183,6 +184,83 @@ impl Column {
 }
 
 #[derive(Debug, Clone)]
+pub struct DrawPile {
+    pub drawn: Vec<Card>,
+    pub to_draw: Vec<Card>,
+}
+
+impl DrawPile {
+    pub fn new(cards: Vec<Card>) -> DrawPile {
+        let (drawn, to_draw) = cards.split_at(3);
+        DrawPile {
+            drawn: drawn.to_vec(),
+            to_draw: to_draw.to_vec(),
+        }
+    }
+
+    pub fn total_size(&self) -> usize {
+        self.drawn.len() + self.to_draw.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.total_size() == 0
+    }
+
+    pub fn candidate_draws(&self) -> Vec<(DrawPile, Card)> {
+        let mut result = vec![];
+        if self.is_empty() {
+            return result;
+        }
+        if !self.drawn.is_empty() {
+            let mut drawn = self.drawn.clone();
+            let card = drawn.pop().unwrap();
+            result.push((
+                DrawPile {
+                    drawn,
+                    to_draw: self.to_draw.clone(),
+                },
+                card,
+            ));
+        }
+
+        /// TODO: likely not correct
+        fn candidate_draws(drawn: Vec<Card>, to_draw: Vec<Card>) -> Vec<(DrawPile, Card)> {
+            let mut drawn = drawn.clone();
+            let mut to_draw = to_draw.clone();
+            let mut result = vec![];
+            while !to_draw.is_empty() {
+                let (draw, remaining) = to_draw.split_at(std::cmp::min(3, to_draw.len()));
+                let (card, draw_rest) = draw.split_last().unwrap();
+                let card = card.clone();
+                drawn = [drawn, draw_rest.to_vec()].concat();
+                to_draw = remaining.to_vec();
+                result.push((
+                    DrawPile {
+                        drawn: drawn.clone(),
+                        to_draw: to_draw.clone(),
+                    },
+                    card,
+                ));
+            }
+            result
+        }
+
+        result.append(&mut candidate_draws(
+            self.drawn.clone(),
+            self.to_draw.clone(),
+        ));
+
+        if self.drawn.len() % 3 != 0 {
+            let all = [self.drawn.clone(), self.to_draw.clone()].concat();
+            let (drawn, to_draw) = all.split_at(3);
+            result.append(&mut candidate_draws(drawn.to_vec(), to_draw.to_vec()));
+        }
+
+        result
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct KlondikeState {
     pub collected_clubs: Option<Value>,
     pub collected_spades: Option<Value>,
@@ -190,8 +268,7 @@ pub struct KlondikeState {
     pub collected_hearts: Option<Value>,
 
     pub columns: [Column; 7],
-    pub draw_pile: Vec<Card>,
-    pub draw_pile_position: usize,
+    pub draw_pile: DrawPile,
     pub movements: Vec<Movement>,
 }
 
@@ -206,8 +283,8 @@ impl KlondikeState {
             });
         }
         let columns: [Column; 7] = columns.try_into().unwrap();
-        let draw_pile = cards.collect::<Vec<_>>();
-        assert_eq!(draw_pile.len(), 24);
+        let draw_pile = DrawPile::new(cards.collect::<Vec<_>>());
+        assert_eq!(draw_pile.total_size(), 24);
         KlondikeState {
             collected_clubs: None,
             collected_spades: None,
@@ -216,33 +293,36 @@ impl KlondikeState {
 
             columns,
             draw_pile,
-            draw_pile_position: 2,
             movements: vec![],
         }
     }
 
     pub fn as_text(&self) -> String {
         let mut result = String::new();
-        let draw_pile = self
-            .draw_pile
-            .iter()
-            .map(ToString::to_string)
-            .collect::<Vec<_>>()
-            .join(" ");
-        writeln!(&mut result, "draw pile: {}", draw_pile).unwrap();
-        write!(&mut result, "           ").unwrap();
-        for i in 0..self.draw_pile.len() {
-            write!(
-                &mut result,
-                "{}",
-                match i == self.draw_pile_position {
-                    true => format!("^{:^>2} ", i),
-                    false => format!(" {:>2} ", i),
-                }
-            )
-            .unwrap()
+
+        fn to_draw(c: &Vec<Card>) -> String {
+            let (chunks, remainder) = c.as_chunks::<3>();
+
+            fn chunk(c: Vec<Card>) -> String {
+                c.iter()
+                    .map(std::string::ToString::to_string)
+                    .collect::<Vec<_>>()
+                    .concat()
+            }
+
+            let mut chunks = chunks.iter().map(|c| c.to_vec()).collect::<Vec<_>>();
+            chunks.push(remainder.to_vec());
+
+            chunks
+                .iter()
+                .map(|c| c.to_vec())
+                .map(chunk)
+                .collect::<Vec<_>>()
+                .join(", ")
         }
-        writeln!(&mut result).unwrap();
+
+        writeln!(&mut result, "drawn:   {}", to_draw(&self.draw_pile.drawn),).unwrap();
+        writeln!(&mut result, "to_draw: {}", to_draw(&self.draw_pile.to_draw),).unwrap();
 
         fn collected(collected: Option<Value>) -> String {
             match collected {
@@ -297,8 +377,8 @@ impl KlondikeState {
     pub fn possible_moves(&self) -> Vec<KlondikeState> {
         let mut result = vec![];
         result.extend(self.possible_collect_from_columns());
+        result.extend(self.possible_collect_from_draw_pile());
         // possible_move_between_columns
-        // possible_collect_from_draw_pile
         // possible_move_from_draw_pile_to_column
         result
     }
@@ -352,7 +432,6 @@ impl KlondikeState {
             collected_hearts: *collected_by_suit.get(&Suit::Hearts).unwrap(),
             columns,
             draw_pile: self.draw_pile.clone(),
-            draw_pile_position: self.draw_pile_position,
             movements: new_movements(
                 self.movements.clone(),
                 Movement::CollectFromColumn(column_index),
@@ -368,6 +447,36 @@ impl KlondikeState {
             (Suit::Hearts, self.collected_hearts),
         ])
     }
+
+    fn possible_collect_from_draw_pile(&self) -> Vec<KlondikeState> {
+        let mut result = vec![];
+
+        if self.draw_pile.is_empty() {
+            return result;
+        }
+
+        for (candidate_draw_pile, candidate_card) in self.draw_pile.candidate_draws() {
+            if Some(candidate_card.value) == self.next_to_collect_by_suit(candidate_card.suit) {
+                let mut collected_by_suit = self.collected_by_suit_hashmap();
+                collected_by_suit.insert(candidate_card.suit, Some(candidate_card.value));
+
+                result.push(KlondikeState {
+                    collected_clubs: *collected_by_suit.get(&Suit::Clubs).unwrap(),
+                    collected_spades: *collected_by_suit.get(&Suit::Spades).unwrap(),
+                    collected_diamonds: *collected_by_suit.get(&Suit::Diamonds).unwrap(),
+                    collected_hearts: *collected_by_suit.get(&Suit::Hearts).unwrap(),
+                    columns: self.columns.clone(),
+                    draw_pile: candidate_draw_pile,
+                    movements: new_movements(
+                        self.movements.clone(),
+                        Movement::CollectFromDrawPile(candidate_card),
+                    ),
+                });
+            }
+        }
+        result
+    }
+}
 
 fn new_movements(old_movements: Vec<Movement>, movement: Movement) -> Vec<Movement> {
     let mut movements = old_movements.into_iter().collect::<Vec<_>>();
