@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::fmt::Write;
 
-use crate::column::Column;
+use crate::column::{shift, Column};
 use crate::deck::{Card, Suit, Value};
 use crate::draw_pile::DrawPile;
 
@@ -10,6 +10,7 @@ pub enum Movement {
     CollectFromColumn(usize),
     CollectFromDrawPile(Card),
     MoveFromDrawPileToColumn(Card, usize),
+    MoveChunkBetweenColumns(usize, usize, usize),
 }
 
 impl std::fmt::Display for Movement {
@@ -19,6 +20,12 @@ impl std::fmt::Display for Movement {
             Self::CollectFromDrawPile(card) => write!(f, "collect from draw pile {card}"),
             Self::MoveFromDrawPileToColumn(card, column) => {
                 write!(f, "move from draw pile {card} to column {column}")
+            }
+            Self::MoveChunkBetweenColumns(size, from_index, to_index) => {
+                write!(
+                    f,
+                    "move {size} cards from column {from_index} to {to_index}"
+                )
             }
         }
     }
@@ -155,7 +162,7 @@ impl KlondikeState {
         result.extend(self.possible_collect_from_columns());
         result.extend(self.possible_collect_from_draw_pile());
         result.extend(self.possible_move_from_draw_pile_to_column());
-        // TODO possible_move_between_columns
+        result.extend(self.possible_move_between_columns());
         // TODO possible_return_collected
         result
     }
@@ -288,6 +295,59 @@ impl KlondikeState {
                             ),
                         });
                     }
+                }
+            }
+        }
+        result
+    }
+
+    fn possible_move_between_columns(&self) -> Vec<KlondikeState> {
+        let mut result = vec![];
+
+        for (from_index, from_column) in self.columns.iter().enumerate() {
+            for (to_index, to_column) in self.columns.iter().enumerate() {
+                if from_index == to_index {
+                    continue;
+                }
+
+                if from_column.is_empty() {
+                    continue;
+                }
+
+                for size in 1..from_column.uncovered.len() {
+                    let chunk = &from_column.uncovered[size - 1..from_column.uncovered.len()];
+                    let candidate_card = chunk[0];
+                    let last = to_column.uncovered.last();
+
+                    match last {
+                        None => {
+                            if candidate_card.value != Value::King {
+                                continue;
+                            }
+                        }
+                        Some(last) => {
+                            if candidate_card.value.next() != Some(last.value)
+                                || candidate_card.suit.color() == last.suit.color()
+                            {
+                                continue;
+                            }
+                        }
+                    }
+
+                    let mut columns = self.columns.clone();
+                    (columns[from_index], columns[to_index]) = shift(chunk, from_column, to_column);
+                    result.push(KlondikeState {
+                        collected_clubs: self.collected_clubs,
+                        collected_spades: self.collected_spades,
+                        collected_diamonds: self.collected_diamonds,
+                        collected_hearts: self.collected_hearts,
+                        columns,
+                        draw_pile: self.draw_pile.clone(),
+                        movements: new_movements(
+                            self.movements.clone(),
+                            Movement::MoveChunkBetweenColumns(chunk.len(), from_index, to_index),
+                        ),
+                    });
                 }
             }
         }
