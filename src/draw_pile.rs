@@ -261,4 +261,34 @@ mod tests {
             ],
         );
     }
+
+    #[test]
+    fn candidate_draws_0_4_6() {
+        assert_candidate_draws(
+            draw_pile(0, 4, 6),
+            vec![
+                (
+                    DrawPile {
+                        drawn: deck_slice(0, 3),
+                        to_draw: deck_slice(4, 6),
+                    },
+                    deck_card(3),
+                ),
+                (
+                    DrawPile {
+                        drawn: deck_slice(0, 5),
+                        to_draw: deck_slice(6, 6),
+                    },
+                    deck_card(5),
+                ),
+                (
+                    DrawPile {
+                        drawn: deck_slice(0, 2),
+                        to_draw: deck_slice(3, 6),
+                    },
+                    deck_card(2),
+                ),
+            ],
+        );
+    }
 }
