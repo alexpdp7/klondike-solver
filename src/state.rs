@@ -108,6 +108,7 @@ impl KlondikeState {
         let tallest_column = column_strings.clone().map(|cs| cs.len()).max().unwrap();
 
         writeln!(&mut result).unwrap();
+        writeln!(&mut result, "  0    1    2    3    4    5    6").unwrap();
         for i in 0..tallest_column {
             for column in column_strings.clone() {
                 write!(
