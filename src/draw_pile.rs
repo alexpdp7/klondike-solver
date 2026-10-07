@@ -40,7 +40,7 @@ impl DrawPile {
             Some((drawn.to_vec(), rest.to_vec(), *card))
         }
 
-        let drawn = self.drawn.clone();
+        let mut drawn = self.drawn.clone();
         let mut to_draw = self.to_draw.clone();
 
         let binding = drawn.clone();
@@ -73,6 +73,7 @@ impl DrawPile {
                     this_drawn = [drawn.clone(), draw.0].concat();
                     to_draw = draw.1;
                     card = draw.2;
+                    drawn = [this_drawn.clone(), [card].to_vec()].concat();
                 }
             }
             if card == first_card {
@@ -229,5 +230,35 @@ mod tests {
     #[test]
     fn candidate_draws_0_0_0() {
         assert_candidate_draws(draw_pile(0, 0, 0), vec![]);
+    }
+
+    #[test]
+    fn candidate_draws_0_3_9() {
+        assert_candidate_draws(
+            draw_pile(0, 3, 9),
+            vec![
+                (
+                    DrawPile {
+                        drawn: deck_slice(0, 2),
+                        to_draw: deck_slice(3, 9),
+                    },
+                    deck_card(2),
+                ),
+                (
+                    DrawPile {
+                        drawn: deck_slice(0, 5),
+                        to_draw: deck_slice(6, 9),
+                    },
+                    deck_card(5),
+                ),
+                (
+                    DrawPile {
+                        drawn: deck_slice(0, 8),
+                        to_draw: deck_slice(9, 9),
+                    },
+                    deck_card(8),
+                ),
+            ],
+        );
     }
 }
