@@ -139,6 +139,17 @@ impl KlondikeState {
         result
     }
 
+    pub fn cards_in_columns(&self) -> usize {
+        self.columns
+            .iter()
+            .map(|c| c.uncovered.len() + c.covered.len())
+            .sum()
+    }
+
+    pub fn cards_in_columns_and_draw_pile(&self) -> usize {
+        self.cards_in_columns() + self.draw_pile.total_size()
+    }
+
     pub fn possible_moves(&self) -> Vec<KlondikeState> {
         let mut result = vec![];
         result.extend(self.possible_collect_from_columns());
