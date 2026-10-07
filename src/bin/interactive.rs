@@ -1,10 +1,6 @@
-mod column;
-mod deck;
-mod draw_pile;
-mod state;
-
 fn main() {
-    let mut state = state::KlondikeState::new(deck::shuffled_deck());
+    let mut state =
+        klondike_solver::state::KlondikeState::new(klondike_solver::deck::shuffled_deck());
     loop {
         println!("{}", state.as_text());
         let possible_moves = state.possible_moves();
