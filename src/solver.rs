@@ -3,9 +3,16 @@ use crate::state::KlondikeState;
 pub fn solve(state: KlondikeState) -> KlondikeState {
     let mut states = std::collections::BinaryHeap::new();
     let mut best_state: Option<EvaluableState> = None;
+    let mut max_moves = state.movements.len();
+    let mut moves = 0;
     states.push(EvaluableState(state));
     loop {
         let state = states.pop().unwrap();
+        moves += 1;
+        if state.0.movements.len() > max_moves {
+            max_moves = state.0.movements.len();
+            println!("seen {max_moves} max_moves in {moves} seen moves");
+        }
         if best_state.is_none() || best_state.clone().unwrap() < state {
             best_state = Some(state.clone());
             println!("{}", best_state.clone().unwrap().0.as_text());
