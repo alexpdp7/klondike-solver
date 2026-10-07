@@ -7,7 +7,7 @@ pub fn solve(state: KlondikeState) -> KlondikeState {
     let mut moves = 0;
     states.push(EvaluableState(state));
     loop {
-        let state = states.pop().unwrap();
+        let state = states.pop().expect("more moves to be left");
         moves += 1;
         if state.0.movements.len() > max_moves {
             max_moves = state.0.movements.len();
