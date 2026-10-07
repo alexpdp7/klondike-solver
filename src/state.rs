@@ -141,6 +141,7 @@ impl KlondikeState {
         result.extend(self.possible_collect_from_draw_pile());
         // possible_move_between_columns
         // possible_move_from_draw_pile_to_column
+        // possible_return_collected
         result
     }
 
