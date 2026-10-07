@@ -28,66 +28,41 @@ impl DrawPile {
             return vec![];
         }
 
-        let mut result = vec![];
+        let all_cards = [self.drawn.clone(), self.to_draw.clone()].concat();
+        let mut position = self.drawn.len() - 1;
+        let len = all_cards.len();
 
-        fn draw_up_to_three(cards: &[Card]) -> Option<(Vec<Card>, Vec<Card>, Card)> {
-            if cards.is_empty() {
-                return None;
-            }
-
-            let (drawn, rest) = cards.split_at_checked(std::cmp::min(3, cards.len()))?;
-            let (card, drawn) = drawn.split_last().unwrap();
-            Some((drawn.to_vec(), rest.to_vec(), *card))
-        }
-
-        let drawn = self.drawn.clone();
-        let mut to_draw = self.to_draw.clone();
-
-        let binding = drawn.clone();
-        let draw = binding.split_last().unwrap();
-        let first_card = *draw.0;
-        let this_drawn = draw.1.to_vec();
-
-        result.push((
-            DrawPile {
-                drawn: this_drawn.clone(),
-                to_draw: to_draw.clone(),
-            },
-            first_card,
-        ));
+        let mut candidate_positions = vec![];
 
         loop {
-            let card;
-            let this_drawn;
-            match draw_up_to_three(&to_draw) {
-                None => {
-                    if drawn.is_empty() {
-                        break;
-                    }
-                    let draw = draw_up_to_three(&self.drawn).unwrap();
-                    this_drawn = draw.0;
-                    to_draw = draw.1;
-                    card = draw.2;
-                }
-                Some(draw) => {
-                    this_drawn = [drawn.clone(), draw.0].concat();
-                    to_draw = draw.1;
-                    card = draw.2;
-                }
-            }
-            if card == first_card {
+            candidate_positions.push(position);
+            position += 3;
+            if position >= len {
                 break;
             }
-            result.push((
-                DrawPile {
-                    drawn: this_drawn.clone(),
-                    to_draw: to_draw.clone(),
-                },
-                card,
-            ));
         }
 
-        result
+        position = std::cmp::min(2, len - 1);
+
+        loop {
+            if position == candidate_positions[0] {
+                break;
+            }
+            if position >= len {
+                break;
+            }
+            candidate_positions.push(position);
+            position += 3;
+        }
+
+        candidate_positions
+            .into_iter()
+            .map(|position| {
+                let drawn = all_cards[0..position].to_vec();
+                let to_draw = all_cards[position + 1..].to_vec();
+                (DrawPile { drawn, to_draw }, all_cards[position])
+            })
+            .collect::<Vec<_>>()
     }
 }
 
@@ -229,5 +204,35 @@ mod tests {
     #[test]
     fn candidate_draws_0_0_0() {
         assert_candidate_draws(draw_pile(0, 0, 0), vec![]);
+    }
+
+    #[test]
+    fn candidate_draws_0_3_9() {
+        assert_candidate_draws(
+            draw_pile(0, 3, 9),
+            vec![
+                (
+                    DrawPile {
+                        drawn: deck_slice(0, 2),
+                        to_draw: deck_slice(3, 9),
+                    },
+                    deck_card(2),
+                ),
+                (
+                    DrawPile {
+                        drawn: deck_slice(0, 5),
+                        to_draw: deck_slice(6, 9),
+                    },
+                    deck_card(5),
+                ),
+                (
+                    DrawPile {
+                        drawn: deck_slice(0, 8),
+                        to_draw: deck_slice(9, 9),
+                    },
+                    deck_card(8),
+                ),
+            ],
+        );
     }
 }
