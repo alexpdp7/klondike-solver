@@ -12,7 +12,7 @@ fn main() {
             std::process::exit(1);
         }
         for (i, possible_move) in possible_moves.iter().enumerate() {
-            println!("{} {:?}", i, possible_move.movements.last().unwrap());
+            println!("{} {}", i, possible_move.movements.last().unwrap());
         }
         let mut buffer = String::new();
         std::io::stdin().read_line(&mut buffer).unwrap();

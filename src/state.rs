@@ -6,10 +6,18 @@ use crate::deck::{Card, Suit, Value};
 use crate::draw_pile::DrawPile;
 
 #[derive(Debug, Clone)]
-#[expect(dead_code)]
 pub enum Movement {
     CollectFromColumn(usize),
     CollectFromDrawPile(Card),
+}
+
+impl std::fmt::Display for Movement {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::CollectFromColumn(column) => write!(f, "collect from column {column}"),
+            Self::CollectFromDrawPile(card) => write!(f, "collect from draw pile {card}"),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
