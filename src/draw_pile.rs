@@ -1,6 +1,6 @@
 use crate::deck::Card;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DrawPile {
     pub drawn: Vec<Card>,
     pub to_draw: Vec<Card>,
@@ -74,5 +74,53 @@ impl DrawPile {
         }
 
         result
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn deck_slice(i: usize, j: usize) -> Vec<Card> {
+        crate::deck::deck()[i..j].to_vec()
+    }
+
+    fn deck_card(i: usize) -> Card {
+        crate::deck::deck()[i]
+    }
+
+    fn draw_pile(i: usize, j: usize, k: usize) -> DrawPile {
+        DrawPile {
+            drawn: deck_slice(i, j),
+            to_draw: deck_slice(j, k),
+        }
+    }
+
+    /// Asserts using dbg! to pretty-print the Debug formatting which is easier to read
+    fn assert_candidate_draws(value: Vec<(DrawPile, Card)>, expected: Vec<(DrawPile, Card)>) {
+        assert!(dbg!(value) == dbg!(expected));
+    }
+
+    #[test]
+    fn candidate_draws_0_3_6() {
+        assert_candidate_draws(
+            draw_pile(0, 3, 6).candidate_draws(),
+            vec![
+                (
+                    DrawPile {
+                        drawn: deck_slice(0, 2),
+                        to_draw: deck_slice(3, 6),
+                    },
+                    deck_card(2),
+                ),
+                (
+                    DrawPile {
+                        drawn: deck_slice(0, 5),
+                        to_draw: deck_slice(6, 6),
+                    },
+                    deck_card(5),
+                ),
+            ],
+        );
     }
 }
