@@ -30,4 +30,15 @@ impl Column {
         };
         (popped_column, *popped_card)
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.covered.is_empty() && self.uncovered.is_empty()
+    }
+
+    pub fn push(&self, card: Card) -> Column {
+        Column {
+            covered: self.covered.clone(),
+            uncovered: [self.uncovered.clone(), [card].to_vec()].concat(),
+        }
+    }
 }

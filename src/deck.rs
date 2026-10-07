@@ -1,11 +1,28 @@
 use rand::seq::SliceRandom;
 
+#[derive(PartialEq)]
+pub enum SuitColor {
+    Black,
+    Red,
+}
+
 #[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
 pub enum Suit {
     Clubs,
     Spades,
     Diamonds,
     Hearts,
+}
+
+impl Suit {
+    pub fn color(&self) -> SuitColor {
+        match self {
+            Self::Clubs => SuitColor::Black,
+            Suit::Spades => SuitColor::Black,
+            Suit::Diamonds => SuitColor::Red,
+            Suit::Hearts => SuitColor::Red,
+        }
+    }
 }
 
 impl std::fmt::Display for Suit {

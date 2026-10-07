@@ -9,6 +9,7 @@ use crate::draw_pile::DrawPile;
 pub enum Movement {
     CollectFromColumn(usize),
     CollectFromDrawPile(Card),
+    MoveFromDrawPileToColumn(Card, usize),
 }
 
 impl std::fmt::Display for Movement {
@@ -16,6 +17,9 @@ impl std::fmt::Display for Movement {
         match self {
             Self::CollectFromColumn(column) => write!(f, "collect from column {column}"),
             Self::CollectFromDrawPile(card) => write!(f, "collect from draw pile {card}"),
+            Self::MoveFromDrawPileToColumn(card, column) => {
+                write!(f, "move from draw pile {card} to column {column}")
+            }
         }
     }
 }
@@ -139,8 +143,8 @@ impl KlondikeState {
         let mut result = vec![];
         result.extend(self.possible_collect_from_columns());
         result.extend(self.possible_collect_from_draw_pile());
+        result.extend(self.possible_move_from_draw_pile_to_column());
         // TODO possible_move_between_columns
-        // TODO possible_move_from_draw_pile_to_column
         // TODO possible_return_collected
         result
     }
@@ -234,6 +238,46 @@ impl KlondikeState {
                         Movement::CollectFromDrawPile(candidate_card),
                     ),
                 });
+            }
+        }
+        result
+    }
+
+    fn possible_move_from_draw_pile_to_column(&self) -> Vec<KlondikeState> {
+        let mut result = vec![];
+
+        if self.draw_pile.is_empty() {
+            return result;
+        }
+
+        for (candidate_draw_pile, candidate_card) in self.draw_pile.candidate_draws() {
+            for (column_index, column) in self.columns.iter().enumerate() {
+                match column.uncovered.last() {
+                    None => {}
+                    Some(last) => {
+                        // TODO: unverified king move
+                        if (candidate_card.value.next() != Some(last.value)
+                            || candidate_card.suit.color() == last.suit.color())
+                            && (candidate_card.value != Value::King || !column.is_empty())
+                        {
+                            continue;
+                        }
+                        let mut columns = self.columns.clone();
+                        columns[column_index] = columns[column_index].push(candidate_card);
+                        result.push(KlondikeState {
+                            collected_clubs: self.collected_clubs,
+                            collected_spades: self.collected_spades,
+                            collected_diamonds: self.collected_diamonds,
+                            collected_hearts: self.collected_hearts,
+                            columns,
+                            draw_pile: candidate_draw_pile.clone(),
+                            movements: new_movements(
+                                self.movements.clone(),
+                                Movement::MoveFromDrawPileToColumn(candidate_card, column_index),
+                            ),
+                        });
+                    }
+                }
             }
         }
         result
