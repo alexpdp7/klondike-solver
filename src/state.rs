@@ -78,15 +78,15 @@ impl KlondikeState {
 
         fn collected(collected: Option<Value>) -> String {
             match collected {
-                None => "none".into(),
-                Some(value) => format!("{:?}", value),
+                None => "---".into(),
+                Some(value) => format!("{}", value),
             }
         }
 
-        write!(&mut result, "♣: {} ", collected(self.collected_clubs)).unwrap();
-        write!(&mut result, "♠: {} ", collected(self.collected_spades)).unwrap();
-        write!(&mut result, "♦: {} ", collected(self.collected_diamonds)).unwrap();
-        writeln!(&mut result, "♥: {}", collected(self.collected_hearts)).unwrap();
+        write!(&mut result, "{}♣ ", collected(self.collected_clubs)).unwrap();
+        write!(&mut result, "{}♠ ", collected(self.collected_spades)).unwrap();
+        write!(&mut result, "{}♦ ", collected(self.collected_diamonds)).unwrap();
+        writeln!(&mut result, "{}♥ ", collected(self.collected_hearts)).unwrap();
 
         fn column_to_strings(column: &Column) -> Vec<String> {
             let mut result: Vec<_> = column
