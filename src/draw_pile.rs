@@ -48,7 +48,7 @@ impl DrawPile {
             while !to_draw.is_empty() {
                 let (draw, remaining) = to_draw.split_at(std::cmp::min(3, to_draw.len()));
                 let (card, draw_rest) = draw.split_last().unwrap();
-                let card = card.clone();
+                let card = *card;
                 drawn = [drawn, draw_rest.to_vec()].concat();
                 to_draw = remaining.to_vec();
                 result.push((
@@ -67,7 +67,7 @@ impl DrawPile {
             self.to_draw.clone(),
         ));
 
-        if self.drawn.len() % 3 != 0 {
+        if !self.drawn.len().is_multiple_of(3) {
             let all = [self.drawn.clone(), self.to_draw.clone()].concat();
             let (drawn, to_draw) = all.split_at(3);
             result.append(&mut candidate_draws(drawn.to_vec(), to_draw.to_vec()));

@@ -52,7 +52,7 @@ impl KlondikeState {
     pub fn as_text(&self) -> String {
         let mut result = String::new();
 
-        fn to_draw(c: &Vec<Card>) -> String {
+        fn to_draw(c: &[Card]) -> String {
             let (chunks, remainder) = c.as_chunks::<3>();
 
             fn chunk(c: Vec<Card>) -> String {
