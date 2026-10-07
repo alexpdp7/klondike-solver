@@ -24,53 +24,67 @@ impl DrawPile {
     }
 
     pub fn candidate_draws(&self) -> Vec<(DrawPile, Card)> {
-        let mut result = vec![];
         if self.is_empty() {
-            return result;
+            return vec![];
         }
-        if !self.drawn.is_empty() {
-            let mut drawn = self.drawn.clone();
-            let card = drawn.pop().unwrap();
+
+        let mut result = vec![];
+
+        fn draw_up_to_three(cards: &[Card]) -> Option<(Vec<Card>, Vec<Card>, Card)> {
+            if cards.is_empty() {
+                return None;
+            }
+
+            let (drawn, rest) = cards.split_at_checked(std::cmp::min(3, cards.len()))?;
+            let (card, drawn) = drawn.split_last().unwrap();
+            Some((drawn.to_vec(), rest.to_vec(), *card))
+        }
+
+        let drawn = self.drawn.clone();
+        let mut to_draw = self.to_draw.clone();
+
+        let binding = drawn.clone();
+        let draw = binding.split_last().unwrap();
+        let first_card = *draw.0;
+        let this_drawn = draw.1.to_vec();
+
+        result.push((
+            DrawPile {
+                drawn: this_drawn.clone(),
+                to_draw: to_draw.clone(),
+            },
+            first_card,
+        ));
+
+        loop {
+            let card;
+            let this_drawn;
+            match draw_up_to_three(&to_draw) {
+                None => {
+                    if drawn.is_empty() {
+                        break;
+                    }
+                    let draw = draw_up_to_three(&self.drawn).unwrap();
+                    this_drawn = draw.0;
+                    to_draw = draw.1;
+                    card = draw.2;
+                }
+                Some(draw) => {
+                    this_drawn = [drawn.clone(), draw.0].concat();
+                    to_draw = draw.1;
+                    card = draw.2;
+                }
+            }
+            if card == first_card {
+                break;
+            }
             result.push((
                 DrawPile {
-                    drawn,
-                    to_draw: self.to_draw.clone(),
+                    drawn: this_drawn.clone(),
+                    to_draw: to_draw.clone(),
                 },
                 card,
             ));
-        }
-
-        /// TODO: likely not correct
-        fn candidate_draws(drawn: Vec<Card>, to_draw: Vec<Card>) -> Vec<(DrawPile, Card)> {
-            let mut drawn = drawn.clone();
-            let mut to_draw = to_draw.clone();
-            let mut result = vec![];
-            while !to_draw.is_empty() {
-                let (draw, remaining) = to_draw.split_at(std::cmp::min(3, to_draw.len()));
-                let (card, draw_rest) = draw.split_last().unwrap();
-                let card = *card;
-                drawn = [drawn, draw_rest.to_vec()].concat();
-                to_draw = remaining.to_vec();
-                result.push((
-                    DrawPile {
-                        drawn: drawn.clone(),
-                        to_draw: to_draw.clone(),
-                    },
-                    card,
-                ));
-            }
-            result
-        }
-
-        result.append(&mut candidate_draws(
-            self.drawn.clone(),
-            self.to_draw.clone(),
-        ));
-
-        if !self.drawn.len().is_multiple_of(3) {
-            let all = [self.drawn.clone(), self.to_draw.clone()].concat();
-            let (drawn, to_draw) = all.split_at(3);
-            result.append(&mut candidate_draws(drawn.to_vec(), to_draw.to_vec()));
         }
 
         result
@@ -97,14 +111,14 @@ mod tests {
     }
 
     /// Asserts using dbg! to pretty-print the Debug formatting which is easier to read
-    fn assert_candidate_draws(value: Vec<(DrawPile, Card)>, expected: Vec<(DrawPile, Card)>) {
-        assert!(dbg!(value) == dbg!(expected));
+    fn assert_candidate_draws(draw_pile: DrawPile, expected: Vec<(DrawPile, Card)>) {
+        assert!(dbg!(dbg!(draw_pile).candidate_draws()) == dbg!(expected));
     }
 
     #[test]
     fn candidate_draws_0_3_6() {
         assert_candidate_draws(
-            draw_pile(0, 3, 6).candidate_draws(),
+            draw_pile(0, 3, 6),
             vec![
                 (
                     DrawPile {
@@ -122,5 +136,98 @@ mod tests {
                 ),
             ],
         );
+    }
+
+    #[test]
+    fn candidate_draws_0_3_3() {
+        assert_candidate_draws(
+            draw_pile(0, 3, 3),
+            vec![(
+                DrawPile {
+                    drawn: deck_slice(0, 2),
+                    to_draw: deck_slice(3, 3),
+                },
+                deck_card(2),
+            )],
+        );
+    }
+
+    #[test]
+    fn candidate_draws_0_2_2() {
+        assert_candidate_draws(
+            draw_pile(0, 2, 2),
+            vec![(
+                DrawPile {
+                    drawn: deck_slice(0, 1),
+                    to_draw: deck_slice(2, 2),
+                },
+                deck_card(1),
+            )],
+        );
+    }
+
+    #[test]
+    fn candidate_draws_0_1_1() {
+        assert_candidate_draws(
+            draw_pile(0, 1, 1),
+            vec![(
+                DrawPile {
+                    drawn: deck_slice(0, 0),
+                    to_draw: deck_slice(1, 1),
+                },
+                deck_card(0),
+            )],
+        );
+    }
+
+    #[test]
+    fn candidate_draws_0_6_6() {
+        assert_candidate_draws(
+            draw_pile(0, 6, 6),
+            vec![
+                (
+                    DrawPile {
+                        drawn: deck_slice(0, 5),
+                        to_draw: deck_slice(6, 6),
+                    },
+                    deck_card(5),
+                ),
+                (
+                    DrawPile {
+                        drawn: deck_slice(0, 2),
+                        to_draw: deck_slice(3, 6),
+                    },
+                    deck_card(2),
+                ),
+            ],
+        );
+    }
+
+    #[test]
+    fn candidate_draws_0_5_5() {
+        assert_candidate_draws(
+            draw_pile(0, 5, 5),
+            vec![
+                (
+                    DrawPile {
+                        drawn: deck_slice(0, 4),
+                        to_draw: deck_slice(5, 5),
+                    },
+                    deck_card(4),
+                ),
+                (
+                    DrawPile {
+                        drawn: deck_slice(0, 2),
+                        to_draw: deck_slice(3, 5),
+                    },
+                    deck_card(2),
+                ),
+            ],
+        );
+    }
+
+    #[test]
+    fn candidate_draws_0_0_0() {
+        assert_candidate_draws(draw_pile(0, 0, 0), vec![]);
     }
 }
