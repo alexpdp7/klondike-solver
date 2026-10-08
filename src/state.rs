@@ -338,6 +338,12 @@ impl KlondikeState {
                             if candidate_card.value != Value::King {
                                 continue;
                             }
+
+                            if from_column.uncovered.len() == 0
+                                && from_column.covered.len() == chunk.len()
+                            {
+                                continue;
+                            }
                         }
                         Some(last) => {
                             if candidate_card.value.next() != Some(last.value)
