@@ -10,6 +10,7 @@ pub fn solve(state: KlondikeState) -> Option<KlondikeState> {
     let mut best_state: Option<EvaluableState> = None;
     let mut max_moves = state.movements.len();
     let mut seen_positions = 0;
+    let mut dupes = 0;
     let mut seen_states = HashSet::new();
     states.push(EvaluableState(state));
     loop {
@@ -21,6 +22,7 @@ pub fn solve(state: KlondikeState) -> Option<KlondikeState> {
         let movement_less_klondike_state = MovementLessKlondikeState::from_full_state(&state.0);
 
         if seen_states.contains(&movement_less_klondike_state) {
+            dupes += 1;
             continue;
         }
 
@@ -29,7 +31,7 @@ pub fn solve(state: KlondikeState) -> Option<KlondikeState> {
         seen_positions += 1;
         if state.0.movements.len() > max_moves {
             max_moves = state.0.movements.len();
-            println!("seen {max_moves} max_moves in {seen_positions} seen positions");
+            println!("seen {max_moves} max_moves in {seen_positions} seen positions with {dupes} duplicate positions");
         }
         if best_state.is_none() || best_state.clone().unwrap() < state {
             best_state = Some(state.clone());
