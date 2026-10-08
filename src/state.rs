@@ -283,31 +283,33 @@ impl KlondikeState {
         for (candidate_draw_pile, candidate_card) in self.draw_pile.candidate_draws() {
             for (column_index, column) in self.columns.iter().enumerate() {
                 match column.uncovered.last() {
-                    None => {}
+                    None => {
+                        if candidate_card.value != Value::King {
+                            continue;
+                        }
+                    }
                     Some(last) => {
-                        // TODO: unverified king move
-                        if (candidate_card.value.next() != Some(last.value)
-                            || candidate_card.suit.color() == last.suit.color())
-                            && (candidate_card.value != Value::King || !column.is_empty())
+                        if candidate_card.value.next() != Some(last.value)
+                            || candidate_card.suit.color() == last.suit.color()
                         {
                             continue;
                         }
-                        let mut columns = self.columns.clone();
-                        columns[column_index] = columns[column_index].push(candidate_card);
-                        result.push(KlondikeState {
-                            collected_clubs: self.collected_clubs,
-                            collected_spades: self.collected_spades,
-                            collected_diamonds: self.collected_diamonds,
-                            collected_hearts: self.collected_hearts,
-                            columns,
-                            draw_pile: candidate_draw_pile.clone(),
-                            movements: new_movements(
-                                self.movements.clone(),
-                                Movement::MoveFromDrawPileToColumn(candidate_card, column_index),
-                            ),
-                        });
                     }
                 }
+                let mut columns = self.columns.clone();
+                columns[column_index] = columns[column_index].push(candidate_card);
+                result.push(KlondikeState {
+                    collected_clubs: self.collected_clubs,
+                    collected_spades: self.collected_spades,
+                    collected_diamonds: self.collected_diamonds,
+                    collected_hearts: self.collected_hearts,
+                    columns,
+                    draw_pile: candidate_draw_pile.clone(),
+                    movements: new_movements(
+                        self.movements.clone(),
+                        Movement::MoveFromDrawPileToColumn(candidate_card, column_index),
+                    ),
+                });
             }
         }
         result
