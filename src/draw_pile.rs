@@ -41,6 +41,39 @@ impl DrawPile {
             )];
         }
 
+        if len == 2 {
+            match self.drawn.len() {
+                0 | 2 => {
+                    return vec![(
+                        DrawPile {
+                            drawn: vec![all_cards[0]],
+                            to_draw: vec![],
+                        },
+                        all_cards[1],
+                    )]
+                }
+                1 => {
+                    return vec![
+                        (
+                            DrawPile {
+                                drawn: vec![all_cards[0]],
+                                to_draw: vec![],
+                            },
+                            all_cards[1],
+                        ),
+                        (
+                            DrawPile {
+                                drawn: vec![all_cards[1]],
+                                to_draw: vec![],
+                            },
+                            all_cards[0],
+                        ),
+                    ]
+                }
+                _ => panic!("can't happen"),
+            }
+        }
+
         // TODO: hack?
         let mut position = match self.drawn.len() {
             0 => 2,
