@@ -314,8 +314,8 @@ impl KlondikeState {
                     continue;
                 }
 
-                for size in 1..from_column.uncovered.len() {
-                    let chunk = &from_column.uncovered[size - 1..from_column.uncovered.len()];
+                for size in 1..from_column.uncovered.len() + 1 {
+                    let chunk = &from_column.uncovered[size - 1..];
                     let candidate_card = chunk[0];
                     let last = to_column.uncovered.last();
 
