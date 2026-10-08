@@ -165,6 +165,10 @@ impl KlondikeState {
         self.cards_in_columns() + self.draw_pile.total_size()
     }
 
+    pub fn is_solved(&self) -> bool {
+        self.cards_in_columns_and_draw_pile() == 0
+    }
+
     pub fn possible_moves(&self) -> Vec<KlondikeState> {
         let mut result = vec![];
         result.extend(self.possible_collect_from_columns());
