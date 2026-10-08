@@ -46,15 +46,15 @@ impl Column {
 pub fn shift(chunk: &[Card], from: &Column, to: &Column) -> (Column, Column) {
     let mut covered = from.covered.clone();
     let mut uncovered = from.uncovered[0..from.uncovered.len() - chunk.len()].to_vec();
-    if uncovered.len() == 0 && covered.len() > 0 {
+    if uncovered.is_empty() && !covered.is_empty() {
         let (uncovered_card, new_covered) = covered.split_last().unwrap();
         uncovered = vec![*uncovered_card];
         covered = new_covered.to_vec();
     }
     (
         Column {
-            covered: covered,
-            uncovered: uncovered,
+            covered,
+            uncovered,
         },
         Column {
             covered: to.covered.clone(),
