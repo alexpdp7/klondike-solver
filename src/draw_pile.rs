@@ -29,12 +29,23 @@ impl DrawPile {
         }
 
         let all_cards = [self.drawn.clone(), self.to_draw.clone()].concat();
+        let len = all_cards.len();
+
+        if len == 1 {
+            return vec![(
+                DrawPile {
+                    drawn: vec![],
+                    to_draw: vec![],
+                },
+                all_cards[0],
+            )];
+        }
+
         // TODO: hack?
         let mut position = match self.drawn.len() {
             0 => 2,
             l => l - 1,
         };
-        let len = all_cards.len();
 
         let mut candidate_positions = vec![];
 
@@ -149,6 +160,20 @@ mod tests {
     fn candidate_draws_0_1_1() {
         assert_candidate_draws(
             draw_pile(0, 1, 1),
+            vec![(
+                DrawPile {
+                    drawn: deck_slice(0, 0),
+                    to_draw: deck_slice(1, 1),
+                },
+                deck_card(0),
+            )],
+        );
+    }
+
+    #[test]
+    fn candidate_draws_0_0_1() {
+        assert_candidate_draws(
+            draw_pile(0, 0, 1),
             vec![(
                 DrawPile {
                     drawn: deck_slice(0, 0),
