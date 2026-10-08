@@ -29,7 +29,11 @@ impl DrawPile {
         }
 
         let all_cards = [self.drawn.clone(), self.to_draw.clone()].concat();
-        let mut position = self.drawn.len() - 1;
+        // TODO: hack?
+        let mut position = match self.drawn.len() {
+            0 => 2,
+            l => l - 1,
+        };
         let len = all_cards.len();
 
         let mut candidate_positions = vec![];
