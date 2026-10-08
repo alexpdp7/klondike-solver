@@ -1,3 +1,8 @@
+use std::collections::HashSet;
+
+use crate::column::Column;
+use crate::deck::Value;
+use crate::draw_pile::DrawPile;
 use crate::state::KlondikeState;
 
 pub fn solve(state: KlondikeState) -> KlondikeState {
@@ -5,12 +10,22 @@ pub fn solve(state: KlondikeState) -> KlondikeState {
     let mut best_state: Option<EvaluableState> = None;
     let mut max_moves = state.movements.len();
     let mut moves = 0;
+    let mut seen_states = HashSet::new();
     states.push(EvaluableState(state));
     loop {
         let state = states.pop().expect("more moves to be left");
         if state.0.is_solved() {
             return state.0;
         }
+
+        let movement_less_klondike_state = MovementLessKlondikeState::from_full_state(&state.0);
+
+        if seen_states.contains(&movement_less_klondike_state) {
+            continue;
+        }
+
+        seen_states.insert(movement_less_klondike_state);
+
         moves += 1;
         if state.0.movements.len() > max_moves {
             max_moves = state.0.movements.len();
@@ -56,5 +71,29 @@ impl PartialOrd for EvaluableState {
 impl Ord for EvaluableState {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.score().cmp(&other.score())
+    }
+}
+
+#[derive(Hash, Eq, PartialEq)]
+pub struct MovementLessKlondikeState {
+    pub collected_clubs: Option<Value>,
+    pub collected_spades: Option<Value>,
+    pub collected_diamonds: Option<Value>,
+    pub collected_hearts: Option<Value>,
+
+    pub columns: [Column; 7],
+    pub draw_pile: DrawPile,
+}
+
+impl MovementLessKlondikeState {
+    pub fn from_full_state(state: &KlondikeState) -> MovementLessKlondikeState {
+        MovementLessKlondikeState {
+            collected_clubs: state.collected_clubs,
+            collected_spades: state.collected_spades,
+            collected_diamonds: state.collected_diamonds,
+            collected_hearts: state.collected_hearts,
+            columns: state.columns.clone(),
+            draw_pile: state.draw_pile.clone(),
+        }
     }
 }

@@ -1,6 +1,6 @@
 use crate::deck::Card;
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct Column {
     pub covered: Vec<Card>,
     pub uncovered: Vec<Card>,
@@ -52,10 +52,7 @@ pub fn shift(chunk: &[Card], from: &Column, to: &Column) -> (Column, Column) {
         covered = new_covered.to_vec();
     }
     (
-        Column {
-            covered,
-            uncovered,
-        },
+        Column { covered, uncovered },
         Column {
             covered: to.covered.clone(),
             uncovered: [to.uncovered.clone(), chunk.to_vec()].concat(),

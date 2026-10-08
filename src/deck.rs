@@ -42,7 +42,7 @@ impl std::fmt::Display for Suit {
 
 pub const SUITS: [Suit; 4] = [Suit::Clubs, Suit::Spades, Suit::Diamonds, Suit::Hearts];
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Value {
     Ace,
     Two,
@@ -115,7 +115,7 @@ pub const VALUES: [Value; 13] = [
     Value::King,
 ];
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Card {
     pub suit: Suit,
     pub value: Value,

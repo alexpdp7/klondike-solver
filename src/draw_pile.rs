@@ -1,6 +1,6 @@
 use crate::deck::Card;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct DrawPile {
     pub drawn: Vec<Card>,
     pub to_draw: Vec<Card>,
