@@ -5,7 +5,7 @@ use crate::deck::Value;
 use crate::draw_pile::DrawPile;
 use crate::state::KlondikeState;
 
-pub fn solve(state: KlondikeState) -> KlondikeState {
+pub fn solve(state: KlondikeState) -> Option<KlondikeState> {
     let mut states = std::collections::BinaryHeap::new();
     let mut best_state: Option<EvaluableState> = None;
     let mut max_moves = state.movements.len();
@@ -13,9 +13,9 @@ pub fn solve(state: KlondikeState) -> KlondikeState {
     let mut seen_states = HashSet::new();
     states.push(EvaluableState(state));
     loop {
-        let state = states.pop().expect("more moves to be left");
+        let state = states.pop()?;
         if state.0.is_solved() {
-            return state.0;
+            return Some(state.0);
         }
 
         let movement_less_klondike_state = MovementLessKlondikeState::from_full_state(&state.0);
