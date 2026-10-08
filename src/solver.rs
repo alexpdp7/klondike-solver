@@ -27,9 +27,10 @@ pub fn solve(state: KlondikeState) -> KlondikeState {
 struct EvaluableState(KlondikeState);
 
 impl EvaluableState {
-    pub fn score(&self) -> (i32, i32) {
+    pub fn score(&self) -> (i32, i32, i32) {
         (
             -(self.0.cards_in_columns_and_draw_pile() as i32),
+            -(self.0.covered_cards_in_columns() as i32),
             -(self.0.movements.len() as i32),
         )
     }

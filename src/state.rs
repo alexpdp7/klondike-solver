@@ -153,6 +153,10 @@ impl KlondikeState {
             .sum()
     }
 
+    pub fn covered_cards_in_columns(&self) -> usize {
+        self.columns.iter().map(|c| c.covered.len()).sum()
+    }
+
     pub fn cards_in_columns_and_draw_pile(&self) -> usize {
         self.cards_in_columns() + self.draw_pile.total_size()
     }
