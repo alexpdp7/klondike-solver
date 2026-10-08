@@ -11,6 +11,7 @@ pub enum Movement {
     CollectFromDrawPile(Card),
     MoveFromDrawPileToColumn(Card, usize),
     MoveChunkBetweenColumns(usize, usize, usize),
+    ReturnCollected(Card, usize),
 }
 
 impl std::fmt::Display for Movement {
@@ -26,6 +27,9 @@ impl std::fmt::Display for Movement {
                     f,
                     "move {size} cards from column {from_index} to {to_index}"
                 )
+            }
+            Self::ReturnCollected(card, column) => {
+                write!(f, "return collected {card} to column {column}")
             }
         }
     }
@@ -167,7 +171,7 @@ impl KlondikeState {
         result.extend(self.possible_collect_from_draw_pile());
         result.extend(self.possible_move_from_draw_pile_to_column());
         result.extend(self.possible_move_between_columns());
-        // TODO possible_return_collected
+        result.extend(self.possible_return_collected());
         result
     }
 
@@ -355,6 +359,63 @@ impl KlondikeState {
                 }
             }
         }
+        result
+    }
+
+    fn possible_return_collected(&self) -> Vec<KlondikeState> {
+        let mut result = vec![];
+
+        for (suit, collected) in self.collected_by_suit_hashmap() {
+            if collected.is_none() {
+                continue;
+            }
+            let collected = collected.unwrap();
+            for (column_index, column) in self.columns.iter().enumerate() {
+                let card = match column.uncovered.last() {
+                    None => {
+                        if collected == Value::King {
+                            Some(Card {
+                                value: Value::King,
+                                suit,
+                            })
+                        } else {
+                            None
+                        }
+                    }
+                    Some(last) => {
+                        if collected.next() == Some(last.value) && suit.color() != last.suit.color()
+                        {
+                            Some(Card {
+                                value: collected,
+                                suit,
+                            })
+                        } else {
+                            None
+                        }
+                    }
+                };
+                if let Some(card) = card {
+                    let new_column = column.push(card);
+                    let mut columns = self.columns.clone();
+                    columns[column_index] = new_column;
+                    let mut collected_by_suit = self.collected_by_suit_hashmap();
+                    collected_by_suit.insert(suit, collected.previous());
+                    result.push(KlondikeState {
+                        collected_clubs: *collected_by_suit.get(&Suit::Clubs).unwrap(),
+                        collected_spades: *collected_by_suit.get(&Suit::Spades).unwrap(),
+                        collected_diamonds: *collected_by_suit.get(&Suit::Diamonds).unwrap(),
+                        collected_hearts: *collected_by_suit.get(&Suit::Hearts).unwrap(),
+                        columns,
+                        draw_pile: self.draw_pile.clone(),
+                        movements: new_movements(
+                            self.movements.clone(),
+                            Movement::ReturnCollected(card, column_index),
+                        ),
+                    });
+                }
+            }
+        }
+
         result
     }
 }

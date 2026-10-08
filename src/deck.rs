@@ -66,6 +66,13 @@ impl Value {
             value => Some(VALUES[VALUES.iter().position(|v| v == value).unwrap() + 1]),
         }
     }
+
+    pub fn previous(&self) -> Option<Value> {
+        match self {
+            Value::Ace => None,
+            value => Some(VALUES[VALUES.iter().position(|v| v == value).unwrap() - 1]),
+        }
+    }
 }
 
 impl std::fmt::Display for Value {
