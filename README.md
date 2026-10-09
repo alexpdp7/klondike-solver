@@ -8,11 +8,9 @@ The solver deals cards in threes, can cycle the draw pile an unlimited amount of
 
 On my desktop computer, with a 1 minute timeout and 20 test runs:
 
-* 55% solved games
-* 10% exhausts the search without finding a solution
-* 35% times out
-
-Games can take up to around 30 seconds to solve.
+* 55% solved games (~80% under three seconds, the rest between 12-25 seconds)
+* 5% exhausts the search without finding a solution (in under a second)
+* 40% times out
 
 ```
 cargo run --release --bin auto
