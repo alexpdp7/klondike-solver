@@ -5,3 +5,10 @@ edition = "2024"
 
 [dependencies]
 rand = "0.10.3"
+
+[lints.clippy]
+pedantic = { level = "deny", priority = -1 }
+# I prefer match to if..else in some cases
+single_match_else = "allow"
+# I like defining small utility functions right where I'm using them
+items_after_statements = "allow"

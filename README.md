@@ -17,9 +17,3 @@ cargo run --release --bin auto
 ```
 
 (Comparatively, I play a greedy strategy without considering the position of cards in the draw pile, solving about 14% of the games I play.)
-
-Should pass:
-
-```
-cargo clippy -- -D clippy::pedantic -A clippy::single_match_else -A clippy::items-after-statements
-```
