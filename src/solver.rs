@@ -19,14 +19,14 @@ pub fn solve(state: KlondikeState) -> Option<KlondikeState> {
             return Some(state.0);
         }
 
-        let movement_less_klondike_state = MovementLessKlondikeState::from_full_state(&state.0);
+        let movementless_klondike_state = MovementlessKlondikeState::from_full_state(&state.0);
 
-        if seen_states.contains(&movement_less_klondike_state) {
+        if seen_states.contains(&movementless_klondike_state) {
             dupes += 1;
             continue;
         }
 
-        seen_states.insert(movement_less_klondike_state);
+        seen_states.insert(movementless_klondike_state);
 
         seen_positions += 1;
         if state.0.movements.len() > max_moves {
@@ -77,7 +77,7 @@ impl Ord for EvaluableState {
 }
 
 #[derive(Hash, Eq, PartialEq)]
-pub struct MovementLessKlondikeState {
+pub struct MovementlessKlondikeState {
     pub collected_clubs: Option<Value>,
     pub collected_spades: Option<Value>,
     pub collected_diamonds: Option<Value>,
@@ -87,9 +87,9 @@ pub struct MovementLessKlondikeState {
     pub draw_pile: DrawPile,
 }
 
-impl MovementLessKlondikeState {
-    pub fn from_full_state(state: &KlondikeState) -> MovementLessKlondikeState {
-        MovementLessKlondikeState {
+impl MovementlessKlondikeState {
+    pub fn from_full_state(state: &KlondikeState) -> MovementlessKlondikeState {
+        MovementlessKlondikeState {
             collected_clubs: state.collected_clubs,
             collected_spades: state.collected_spades,
             collected_diamonds: state.collected_diamonds,
