@@ -339,7 +339,7 @@ impl KlondikeState {
                                 continue;
                             }
 
-                            if from_column.uncovered.len() == 0
+                            if from_column.uncovered.is_empty()
                                 && from_column.covered.len() == chunk.len()
                             {
                                 continue;
