@@ -7,7 +7,8 @@ pub struct DrawPile {
 }
 
 impl DrawPile {
-    pub fn new(cards: Vec<Card>) -> DrawPile {
+    #[must_use]
+    pub fn new(cards: &[Card]) -> DrawPile {
         let (drawn, to_draw) = cards.split_at(3);
         DrawPile {
             drawn: drawn.to_vec(),
@@ -15,14 +16,17 @@ impl DrawPile {
         }
     }
 
+    #[must_use]
     pub fn total_size(&self) -> usize {
         self.drawn.len() + self.to_draw.len()
     }
 
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.total_size() == 0
     }
 
+    #[must_use]
     pub fn candidate_draws(&self) -> Vec<(DrawPile, Card)> {
         if self.is_empty() {
             return vec![];
@@ -70,6 +74,7 @@ impl DrawPile {
                         ),
                     ]
                 }
+                #[expect(clippy::missing_panics_doc, reason = "infallible")]
                 _ => panic!("can't happen"),
             }
         }

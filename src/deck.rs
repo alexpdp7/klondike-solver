@@ -15,12 +15,11 @@ pub enum Suit {
 }
 
 impl Suit {
+    #[must_use]
     pub fn color(&self) -> SuitColor {
         match self {
-            Self::Clubs => SuitColor::Black,
-            Suit::Spades => SuitColor::Black,
-            Suit::Diamonds => SuitColor::Red,
-            Suit::Hearts => SuitColor::Red,
+            Self::Clubs | Suit::Spades => SuitColor::Black,
+            Suit::Diamonds | Suit::Hearts => SuitColor::Red,
         }
     }
 }
@@ -60,17 +59,41 @@ pub enum Value {
 }
 
 impl Value {
+    #[must_use]
     pub fn next(&self) -> Option<Value> {
         match self {
+            Value::Ace => Some(Value::Two),
+            Value::Two => Some(Value::Three),
+            Value::Three => Some(Value::Four),
+            Value::Four => Some(Value::Five),
+            Value::Five => Some(Value::Six),
+            Value::Six => Some(Value::Seven),
+            Value::Seven => Some(Value::Eight),
+            Value::Eight => Some(Value::Nine),
+            Value::Nine => Some(Value::Ten),
+            Value::Ten => Some(Value::Jack),
+            Value::Jack => Some(Value::Queen),
+            Value::Queen => Some(Value::King),
             Value::King => None,
-            value => Some(VALUES[VALUES.iter().position(|v| v == value).unwrap() + 1]),
         }
     }
 
+    #[must_use]
     pub fn previous(&self) -> Option<Value> {
         match self {
             Value::Ace => None,
-            value => Some(VALUES[VALUES.iter().position(|v| v == value).unwrap() - 1]),
+            Value::Two => Some(Value::Ace),
+            Value::Three => Some(Value::Two),
+            Value::Four => Some(Value::Three),
+            Value::Five => Some(Value::Four),
+            Value::Six => Some(Value::Five),
+            Value::Seven => Some(Value::Six),
+            Value::Eight => Some(Value::Seven),
+            Value::Nine => Some(Value::Eight),
+            Value::Ten => Some(Value::Nine),
+            Value::Jack => Some(Value::Ten),
+            Value::Queen => Some(Value::Jack),
+            Value::King => Some(Value::Queen),
         }
     }
 }
@@ -127,6 +150,7 @@ impl std::fmt::Display for Card {
     }
 }
 
+#[must_use]
 pub fn deck() -> [Card; 52] {
     let mut result = vec![];
     for suit in SUITS {
@@ -134,9 +158,12 @@ pub fn deck() -> [Card; 52] {
             result.push(Card { suit, value });
         }
     }
+    // infallible as long as SUITS.len() * VALUES.len() == 52
+    #[expect(clippy::missing_panics_doc, reason = "infallible")]
     *result.as_array().unwrap()
 }
 
+#[must_use]
 pub fn shuffled_deck() -> [Card; 52] {
     let mut rng = rand::rng();
     let mut deck = deck();

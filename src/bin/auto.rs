@@ -6,7 +6,7 @@ fn main() {
         Some(final_state) => {
             println!("{}", initial_state.as_text());
             for movement in &final_state.movements {
-                println!("{}", movement);
+                println!("{movement}");
             }
         }
         None => {

@@ -7,6 +7,10 @@ pub struct Column {
 }
 
 impl Column {
+    /// # Panics
+    ///
+    /// If there are no cards to uncover.
+    #[must_use]
     pub fn pop_last_uncovered(&self) -> (Column, Card) {
         let (popped_card, except_last) = self.uncovered.split_last().unwrap();
         let popped_column = match except_last.len() {
@@ -31,10 +35,12 @@ impl Column {
         (popped_column, *popped_card)
     }
 
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.covered.is_empty() && self.uncovered.is_empty()
     }
 
+    #[must_use]
     pub fn push(&self, card: Card) -> Column {
         Column {
             covered: self.covered.clone(),
@@ -43,10 +49,12 @@ impl Column {
     }
 }
 
+#[must_use]
 pub fn shift(chunk: &[Card], from: &Column, to: &Column) -> (Column, Column) {
     let mut covered = from.covered.clone();
     let mut uncovered = from.uncovered[0..from.uncovered.len() - chunk.len()].to_vec();
     if uncovered.is_empty() && !covered.is_empty() {
+        #[expect(clippy::missing_panics_doc, reason = "infallible")]
         let (uncovered_card, new_covered) = covered.split_last().unwrap();
         uncovered = vec![*uncovered_card];
         covered = new_covered.to_vec();

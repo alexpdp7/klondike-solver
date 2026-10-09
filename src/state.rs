@@ -48,18 +48,24 @@ pub struct KlondikeState {
 }
 
 impl KlondikeState {
+    #[must_use]
     pub fn new(cards: [Card; 52]) -> KlondikeState {
+        // Because the array is of size 52, as long as the rules are correct, all panics below are infallible
         let mut cards = cards.into_iter();
         let mut columns = vec![];
         for column in 0..7 {
             columns.push(Column {
                 covered: cards.by_ref().take(column).collect(),
+                #[expect(clippy::missing_panics_doc, reason = "infallible")]
                 uncovered: vec![cards.next().unwrap()],
             });
         }
+        // We just build 7 columns
+        #[expect(clippy::missing_panics_doc, reason = "infallible")]
         let columns: [Column; 7] = columns.try_into().unwrap();
-        let draw_pile = DrawPile::new(cards.collect::<Vec<_>>());
-        assert_eq!(draw_pile.total_size(), 24);
+        let draw_pile = DrawPile::new(&cards.collect::<Vec<_>>());
+        // It's just a sanity check
+        debug_assert_eq!(draw_pile.total_size(), 24);
         KlondikeState {
             collected_clubs: None,
             collected_spades: None,
@@ -78,7 +84,7 @@ impl KlondikeState {
         fn to_draw(c: &[Card]) -> String {
             let (chunks, remainder) = c.as_chunks::<3>();
 
-            fn chunk(c: Vec<Card>) -> String {
+            fn chunk(c: &[Card]) -> String {
                 c.iter()
                     .map(std::string::ToString::to_string)
                     .collect::<Vec<_>>()
@@ -90,19 +96,18 @@ impl KlondikeState {
 
             chunks
                 .iter()
-                .map(|c| c.to_vec())
-                .map(chunk)
+                .map(|c| chunk(c))
                 .collect::<Vec<_>>()
                 .join(", ")
         }
 
-        writeln!(&mut result, "drawn:   {}", to_draw(&self.draw_pile.drawn),).unwrap();
-        writeln!(&mut result, "to_draw: {}", to_draw(&self.draw_pile.to_draw),).unwrap();
+        writeln!(&mut result, "drawn:   {}", to_draw(&self.draw_pile.drawn)).unwrap();
+        writeln!(&mut result, "to_draw: {}", to_draw(&self.draw_pile.to_draw)).unwrap();
 
         fn collected(collected: Option<Value>) -> String {
             match collected {
                 None => "---".into(),
-                Some(value) => format!("{}", value),
+                Some(value) => format!("{value}"),
             }
         }
 
@@ -115,19 +120,22 @@ impl KlondikeState {
             let mut result: Vec<_> = column
                 .covered
                 .iter()
-                .map(|card| format!("({})", card))
+                .map(|card| format!("({card})"))
                 .collect();
             result.extend(
                 column
                     .uncovered
                     .iter()
-                    .map(|card| format!(" {} ", card))
+                    .map(|card| format!(" {card} "))
                     .collect::<Vec<_>>(),
             );
             result
         }
 
         let column_strings = self.columns.iter().map(column_to_strings);
+
+        // column_strings is a map of a seven column array, so it cannot be empty
+        #[expect(clippy::missing_panics_doc, reason = "infallible")]
         let tallest_column = column_strings.clone().map(|cs| cs.len()).max().unwrap();
 
         writeln!(&mut result).unwrap();
@@ -150,6 +158,7 @@ impl KlondikeState {
         result
     }
 
+    #[must_use]
     pub fn cards_in_columns(&self) -> usize {
         self.columns
             .iter()
@@ -157,18 +166,22 @@ impl KlondikeState {
             .sum()
     }
 
+    #[must_use]
     pub fn covered_cards_in_columns(&self) -> usize {
         self.columns.iter().map(|c| c.covered.len()).sum()
     }
 
+    #[must_use]
     pub fn cards_in_columns_and_draw_pile(&self) -> usize {
         self.cards_in_columns() + self.draw_pile.total_size()
     }
 
+    #[must_use]
     pub fn is_solved(&self) -> bool {
         self.cards_in_columns_and_draw_pile() == 0
     }
 
+    #[must_use]
     pub fn possible_moves(&self) -> Vec<KlondikeState> {
         let mut result = vec![];
         result.extend(self.possible_collect_from_columns());
@@ -186,11 +199,10 @@ impl KlondikeState {
             match column.uncovered.last() {
                 None => {}
                 Some(last) => match self.next_to_collect_by_suit(last.suit) {
-                    None => {}
                     Some(next_to_collect) if next_to_collect == last.value => {
                         result.push(self.collect_from_column(column));
                     }
-                    Some(_) => {}
+                    None | Some(_) => {}
                 },
             }
         }
@@ -328,7 +340,7 @@ impl KlondikeState {
                     continue;
                 }
 
-                for size in 1..from_column.uncovered.len() + 1 {
+                for size in 1..=from_column.uncovered.len() {
                     let chunk = &from_column.uncovered[size - 1..];
                     let candidate_card = chunk[0];
                     let last = to_column.uncovered.last();

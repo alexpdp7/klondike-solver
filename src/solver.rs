@@ -5,9 +5,10 @@ use crate::deck::Value;
 use crate::draw_pile::DrawPile;
 use crate::state::KlondikeState;
 
+#[must_use]
 pub fn solve(state: KlondikeState) -> Option<KlondikeState> {
     let mut states = std::collections::BinaryHeap::new();
-    let mut best_state: Option<EvaluableState> = None;
+    let mut best_state = EvaluableState(state.clone());
     let mut max_moves = state.movements.len();
     let mut seen_positions = 0;
     let mut dupes = 0;
@@ -33,12 +34,12 @@ pub fn solve(state: KlondikeState) -> Option<KlondikeState> {
             max_moves = state.0.movements.len();
             println!("seen {max_moves} max_moves in {seen_positions} seen positions with {dupes} duplicate positions");
         }
-        if best_state.is_none() || best_state.clone().unwrap() < state {
-            best_state = Some(state.clone());
-            println!("{}", best_state.clone().unwrap().0.as_text());
+        if best_state < state {
+            best_state = state.clone();
+            println!("{}", best_state.0.as_text());
         }
         for state in state.0.possible_moves() {
-            states.push(EvaluableState(state.clone()))
+            states.push(EvaluableState(state.clone()));
         }
     }
 }
@@ -47,11 +48,12 @@ pub fn solve(state: KlondikeState) -> Option<KlondikeState> {
 struct EvaluableState(KlondikeState);
 
 impl EvaluableState {
-    pub fn score(&self) -> (i32, i32, i32) {
+    pub fn score(&self) -> (isize, isize, isize) {
+        // Values should be small enough to cast from usize to isizes
         (
-            -(self.0.cards_in_columns_and_draw_pile() as i32),
-            -(self.0.covered_cards_in_columns() as i32),
-            -(self.0.movements.len() as i32),
+            -(self.0.cards_in_columns_and_draw_pile().cast_signed()),
+            -(self.0.covered_cards_in_columns().cast_signed()),
+            -(self.0.movements.len().cast_signed()),
         )
     }
 }
@@ -88,6 +90,7 @@ pub struct MovementlessKlondikeState {
 }
 
 impl MovementlessKlondikeState {
+    #[must_use]
     pub fn from_full_state(state: &KlondikeState) -> MovementlessKlondikeState {
         MovementlessKlondikeState {
             collected_clubs: state.collected_clubs,
